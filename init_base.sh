@@ -1,9 +1,11 @@
 #!/bin/bash
 
-mkdir base
+btrfs subvolume create base
+
 cd base
 echo Downloading the latest raspbian lite
-curl wget https://downloads.raspberrypi.org/raspbian_lite_latest | bsdtar -xvf-
+wget https://downloads.raspberrypi.org/raspbian_lite_latest
+unzip raspbian_lite_latest
 
 echo Done
 cd ..
