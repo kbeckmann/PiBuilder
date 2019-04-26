@@ -13,23 +13,17 @@ sync
 
 cd $WORKDIR
 
-# Need a unique filename to make kpartx happy
 mv $IMG_FILE $IMG_FILE_RENAMED
 
-# Use kpartx magic to set up loop devices for the partitions in the image
-kpartx -a -s $IMG_FILE_RENAMED
-BOOT_PART=/dev/mapper/$(kpartx -l $IMG_FILE_RENAMED | head -1 | awk '{print $1}')
-ROOT_PART=/dev/mapper/$(kpartx -l $IMG_FILE_RENAMED | head -2 | tail -1 | awk '{print $1}')
-
-echo Boot: $BOOT_PART
-echo Root: $ROOT_PART
+LOOPDEV=$(losetup -f)
+losetup -P "$LOOPDEV" $IMG_FILE_RENAMED
 
 mkdir root
 mkdir boot
 
 echo Mounting...
-mount $BOOT_PART boot
-mount $ROOT_PART root
+mount "${LOOPDEV}p1" boot
+mount "${LOOPDEV}p2" root
 
 for overlay in $PIBUILDERDIR/overlays/*.sh; do
     echo "Applying overlay: $overlay"
@@ -39,7 +33,6 @@ done;
 echo Unmounting...
 umount boot
 umount root
-kpartx -d $IMG_FILE_RENAMED
 
 cd ..
 
@@ -48,4 +41,5 @@ cd ..
 # echo Deleting subvolume...
 # btrfs subvolume delete $WORKDIR
 
+losetup -d "$LOOPDEV"
 echo Done.
